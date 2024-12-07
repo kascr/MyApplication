@@ -50,7 +50,7 @@ android {
 }
 
 dependencies {
-   // implementation "com.github.oshi:oshi-core:5.8.5"// 依赖 OSHI 库
+    implementation(libs.oshi.core) // 添加 OSHI 库依赖项
     implementation(libs.material.v190) // 依赖 Material Design 库
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
