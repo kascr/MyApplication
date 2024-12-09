@@ -9,6 +9,9 @@
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <!-- 允许应用程序获得超级用户权限 -->
     <uses-permission android:name="android.permission.ACCESS_SUPERUSER" />
+    <!-- 允许应用获取存储 -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
 
     <application
         android:allowBackup="true"

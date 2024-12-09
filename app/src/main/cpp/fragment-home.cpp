@@ -242,7 +242,8 @@ Java_com_kascr_myapplication_fragment_HomeFragment_getGPULoad(JNIEnv* env, jobje
     FILE *fp = popen("su -c cat /sys/class/kgsl/kgsl-3d0/gpu_busy_percentage", "r");
 
     if (fp == nullptr) {
-        return -1; // 报错，无法获取GPU负载
+        return -1; // 报错，无法获取GPU负载'
+
     }
     // 创建一个字符数组来存储读取的内容
     char gpuLoadStr[32];
@@ -294,8 +295,8 @@ long readFrequencyFromFile(const std::string& path) {
     std::getline(file, line);
     return std::stol(line);  // 返回频率（单位：kHz）
 }
+#define TAG "CpuUsageMonitor"
 
-// 提取 CPU 信息并返回数值列表
 std::vector<std::string> extractValues(const std::string& input) {
     std::istringstream ss(input);
     std::vector<std::string> values{std::istream_iterator<std::string>{ss}, std::istream_iterator<std::string>{}};
@@ -303,48 +304,76 @@ std::vector<std::string> extractValues(const std::string& input) {
     return values;
 }
 
-// 计算 jiffies 总和
 long sumValues(const std::vector<std::string>& values) {
     return std::accumulate(values.begin(), values.end(), 0L, [](long sum, const std::string& val) {
         return sum + std::stol(val);
     });
 }
 
-// 获取指定核心的 CPU 使用率
 extern "C"
 JNIEXPORT jint JNICALL
-Java_com_kascr_myapplication_fragment_HomeFragment_getCpuCoreUsage(JNIEnv *env, jobject, jint coreIndex) {
-    std::ifstream file("/proc/stat");
-    if (!file.is_open()) return -1;
+Java_com_kascr_myapplication_fragment_HomeFragment_getCpuCoreLoad(JNIEnv *env, jobject, jint coreIndex) {
+    FILE* file = popen("su -c cat /proc/stat", "r");
+    if (!file) {
+        __android_log_print(ANDROID_LOG_ERROR, TAG, "错误：无法使用 root 权限打开 /proc/stat 文件。");
+        return -1;  // 返回 -1 并打印错误提示
+    }
 
     long Totaljiffies[2] = {0};
     long totalIdle[2] = {0};
     double rate = 0.0;
 
     for (int i = 0; i < 2; ++i) {
-        std::string line;
-        while (std::getline(file, line)) {
-            if (line.rfind("cpu" + std::to_string(coreIndex), 0) == 0) {
-                auto values = extractValues(line);
+        char line[256];
+        bool found = false;
+
+        while (fgets(line, sizeof(line), file)) {
+            std::string lineStr(line);
+            if (lineStr.rfind("cpu" + std::to_string(coreIndex), 0) == 0) {
+                found = true;
+                auto values = extractValues(lineStr);
+
+                // 打印解析后的值，帮助调试
+                __android_log_print(ANDROID_LOG_DEBUG, TAG, "提取的 cpu%d 值：%s", coreIndex, lineStr.c_str());
+
+                if (values.size() < 4) {
+                    __android_log_print(ANDROID_LOG_ERROR, TAG, "错误：/proc/stat 中的 cpu%d 数据无效", coreIndex);
+                    pclose(file);
+                    return -1;  // 如果解析的数据不完整，返回 -1
+                }
+
                 Totaljiffies[i] = sumValues(values);
                 totalIdle[i] = std::stol(values[3]);  // 空闲时间
             }
         }
 
-        if (i == 0) std::this_thread::sleep_for(std::chrono::milliseconds(100));  // 等待系统更新
+        if (!found) {
+            __android_log_print(ANDROID_LOG_ERROR, TAG, "错误：在 /proc/stat 中找不到 cpu%d 核心。", coreIndex);
+            pclose(file);
+            return -1;  // 如果没有找到指定的 CPU 核心，返回 -1
+        }
 
-        file.clear();  // 重置文件流
-        file.seekg(0, std::ios::beg);
+        if (i == 0) std::this_thread::sleep_for(std::chrono::milliseconds(500));  // 等待系统更新
+
+        rewind(file);  // 重置文件指针
     }
+
+    pclose(file);
 
     if (Totaljiffies[1] > Totaljiffies[0]) {
         rate = static_cast<double>((Totaljiffies[1] - totalIdle[1]) - (Totaljiffies[0] - totalIdle[0])) /
                (Totaljiffies[1] - Totaljiffies[0]);
     }
 
+    __android_log_print(ANDROID_LOG_DEBUG, TAG, "CPU 核心 %d 的负载: %.2f%%", coreIndex, rate * 100);
+
+    if (rate < 0) {
+        __android_log_print(ANDROID_LOG_ERROR, TAG, "错误：计算 CPU 使用率时出错。");
+        return -1;  // 如果计算出的 CPU 使用率小于 0，返回 -1
+    }
+
     return static_cast<jint>(rate * 100);  // 返回百分比
 }
-
 // 获取指定核心的最小频率、最大频率和当前频率（单位：MHz）
 extern "C"
 JNIEXPORT jintArray JNICALL

@@ -18,6 +18,9 @@ dependencyResolutionManagement {
         google()
         mavenCentral()
     }
+    repositories {
+        maven("https://jitpack.io")
+    }
 }
 
 rootProject.name = "My Application"

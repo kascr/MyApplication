@@ -31,32 +31,43 @@ android {
             )
         }
     }
+
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
     }
+
     kotlinOptions {
-        jvmTarget = "11"
+        jvmTarget = "1.8"
     }
+
     externalNativeBuild {
         cmake {
             path = file("src/main/cpp/CMakeLists.txt")
             version = "3.22.1"
         }
     }
+
     buildFeatures {
         viewBinding = true
     }
 }
 
-dependencies {
-    implementation(libs.oshi.core) // 添加 OSHI 库依赖项
-    implementation(libs.material.v190) // 依赖 Material Design 库
-    implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.appcompat)
-    implementation(libs.material)
-    implementation(libs.androidx.constraintlayout)
-    testImplementation(libs.junit)
-    androidTestImplementation(libs.androidx.junit)
-    androidTestImplementation(libs.androidx.espresso.core)
-}
+
+
+    dependencies {
+        val libsuVersion = "6.0.0"
+
+        implementation("com.github.topjohnwu.libsu:core:$libsuVersion")
+        implementation("com.github.topjohnwu.libsu:service:$libsuVersion")
+        implementation("com.github.topjohnwu.libsu:nio:$libsuVersion")
+
+        implementation(libs.material.v190)
+        implementation(libs.androidx.core.ktx)
+        implementation(libs.androidx.appcompat)
+        implementation(libs.material)
+        implementation(libs.androidx.constraintlayout)
+        testImplementation(libs.junit)
+        androidTestImplementation(libs.androidx.junit)
+        androidTestImplementation(libs.androidx.espresso.core)
+    }

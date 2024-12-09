@@ -1,3 +1,7 @@
+
+
+
+
 package com.kascr.myapplication.fragment
 
 import android.os.Bundle
@@ -11,6 +15,11 @@ import androidx.lifecycle.lifecycleScope
 import com.kascr.myapplication.databinding.FragmentHomeBinding
 import com.kascr.myapplication.R
 import com.kascr.myapplication.base.BaseFragment
+import java.io.RandomAccessFile
+import java.io.FileReader
+import java.io.BufferedReader
+import java.io.InputStreamReader
+
 
 
 class HomeFragment : BaseFragment<FragmentHomeBinding>(R.layout.fragment_home) {
@@ -27,15 +36,12 @@ class HomeFragment : BaseFragment<FragmentHomeBinding>(R.layout.fragment_home) {
     private external fun getDataUsedSpace(): Double// 获取数据分区已使用空间
     private external fun getGPUMhz(): Int// 获取 GPU 频率
     private external fun getGPULoad(): Int// 获取 GPU 负载
-    private external fun getCpuCoreUsage(coreIndex: Int): Int
+    private external fun getCpuCoreLoad(coreIndex: Int): Int
     private external fun getCpuCoreFrequencies(coreIndex: Int): IntArray
 
 
-
-
-
-
     private var jobList: List<Job> = listOf()// 协程任务列表
+
 
     companion object {
         init {
@@ -51,8 +57,6 @@ class HomeFragment : BaseFragment<FragmentHomeBinding>(R.layout.fragment_home) {
         super.onViewCreated(view, savedInstanceState)
 
         startUpdatingProgressBars()// 启动多个协程任务来分别更新进度条
-        Log.d("cpu", "onViewCreated: ${getCpuCoreFrequencies(0)}")
-
 
 
     }
@@ -90,44 +94,44 @@ class HomeFragment : BaseFragment<FragmentHomeBinding>(R.layout.fragment_home) {
     }
 
 
-
-
-
-
     //更新物理内存
     private fun UpdateMemoryProgressBar() {
-        binding.tvPhysicalMemoryPercentage.text="${getMemoryUsage()}%"// 显示内存使用率
+        binding.tvPhysicalMemoryPercentage.text = "${getMemoryUsage()}%"// 显示内存使用率
         binding.physicalMemoryProgress.setProgress(getMemoryUsage(), true)// 设置进度条进度
         binding.tvMemoryUsage.text = String.format("%.2f/%.2f GB", getUsedMemory().toFloat(), getMaxMemory().toFloat())// 显示已使用内存和最大内存
     }
+
     //更新交换内存
     private fun UpdateSwapProgressBar() {
-        binding.tvSwapMemoryPercentage.text="${getSwapMemoryUsage()}%"// 显示交换内存使用率
+        binding.tvSwapMemoryPercentage.text = "${getSwapMemoryUsage()}%"// 显示交换内存使用率
         binding.swapMemoryProgress.setProgress(getSwapMemoryUsage(), true)// 设置进度条进度
         binding.tvSwapDetails.text = String.format("%.2f/%.2f GB", getUsedSwapMemory().toFloat(), getMaxSwapMemory().toFloat())// 显示已使用交换内存和最大交换内存
-
+        Log.d("cpu", "onViewCreated: ${getCpuCoreLoad(5)}")
     }
 
     private fun UpdateGpuProgressBar() {
-        val cpuUsage = getCpuCoreUsage(0)
-        val cpuFrequencies = getCpuCoreFrequencies(0)
+
         binding.gpuProgress.setProgress(getGPULoad(), true)// 设置进度条进度
-        binding.gpuProgressText.text="${getGPULoad()}%"// 显示 GPU 负载
+        binding.gpuProgressText.text = "${getGPULoad()}%"// 显示 GPU 负载
         binding.gpuUsage.text = "${getGPUMhz()} MHz"// 显示 GPU 频率
-        Log.d("CPU Info", "Core 0 Usage: $cpuUsage%")
-        Log.d("CPU Info", "Core 0 Frequencies (MHz): Min = ${cpuFrequencies[0]}, Max = ${cpuFrequencies[1]}, Current = ${cpuFrequencies[2]}")
+
     }
 
     private fun UpdateCpuProgressBar() {
         // 假设这里是更新 CPU 使用率进度条
     }
+
     //更新数据存储
     private fun UpdateDataprogressBar() {
-        binding.dataProgressText.text="${getDataUsage()}%"// 显示数据存储使用率
-        binding.dataUsage.text =String.format("%.2f/%.2f GB", getDataUsedSpace().toFloat(), getDataTotalSpace().toFloat())// 显示已使用数据存储和最大数据存储
+        binding.dataProgressText.text = "${getDataUsage()}%"// 显示数据存储使用率
+        binding.dataUsage.text = String.format("%.2f/%.2f GB", getDataUsedSpace().toFloat(), getDataTotalSpace().toFloat())// 显示已使用数据存储和最大数据存储
         binding.dataProgress.setProgress(getDataUsage(), true)// 设置进度条进度
 
     }
 
-}
 
+
+
+
+
+}

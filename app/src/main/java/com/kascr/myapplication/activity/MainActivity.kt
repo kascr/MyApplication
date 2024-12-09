@@ -11,7 +11,7 @@ import com.kascr.myapplication.fragment.HomeFragment
 import com.kascr.myapplication.fragment.SetFragment
 import com.kascr.myapplication.databinding.ActivityMainBinding
 import com.kascr.myapplication.base.BaseActivity
-import com.kascr.myapplication.function.CPUZ
+
 
 
 class MainActivity : BaseActivity<ActivityMainBinding>() {
